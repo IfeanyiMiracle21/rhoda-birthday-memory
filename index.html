@@ -12,7 +12,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #6b7280, #d1d5db);
+            background: linear-gradient(135deg, #f9a8d4, #c4b5fd);
             font-family: 'Georgia', serif;
             overflow: hidden;
         }
@@ -34,7 +34,7 @@
         .card {
             width: 100px;
             height: 100px;
-            background: #4b5563;
+            background: #f472b6;
             border-radius: 10px;
             display: flex;
             justify-content: center;
@@ -44,20 +44,43 @@
             transform: scale(1);
             transition: transform 0.3s, background 0.3s;
         }
+        .card:hover {
+            transform: scale(1.05);
+            background: #f9a8d4;
+        }
         .card.flipped, .card.matched {
-            background: #f3f4f6;
+            background: #fef3c7;
             transform: scale(1.1);
         }
         .card.matched {
-            background: #34d399;
+            background: #6ee7b7;
         }
-        #score {
+        #stats {
             position: absolute;
             top: 20px;
             left: 20px;
             font-size: 24px;
             color: #fff;
             text-shadow: 1px 1px 2px #333;
+            display: flex;
+            gap: 20px;
+        }
+        #restart {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-family: 'Georgia', serif;
+            background: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s;
+        }
+        #restart:hover {
+            background: #fef3c7;
         }
         #message {
             position: fixed;
@@ -100,17 +123,39 @@
 </head>
 <body>
     <h1>Happy 21st Birthday, Rhoda! 🎉</h1>
-    <div id="score">Matches: 0</div>
+    <div id="stats">
+        <span id="score">Matches: 0</span>
+        <span id="timer">Time: 0s</span>
+    </div>
+    <button id="restart">Restart Game</button>
     <div id="game-container"></div>
-    <div id="message">You Win, Rhoda! Happy Birthday!</div>
+    <div id="message">You Win, Rhoda! Happy 21st! Enjoy your special day! 🎂 ~ Ifeanyi</div>
     <footer>Made with <span>♥</span> by Ifeanyi</footer>
     <script>
         const emojis = ['🎂', '🎂', '🎁', '🎁', '🎈', '🎈', '🎉', '🎉', '🥳', '🥳', '🎀', '🎀', '🍾', '🍾', '🌟', '🌟'];
         const gameContainer = document.getElementById('game-container');
         const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
         const message = document.getElementById('message');
+        const restartButton = document.getElementById('restart');
         let flippedCards = [];
         let matches = 0;
+        let seconds = 0;
+        let timerInterval = null;
+
+        // Sound effects using Web Audio API
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(frequency, type = 'sine', duration = 0.1) {
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+            gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + duration);
+        }
 
         // Shuffle emojis
         function shuffle(array) {
@@ -123,6 +168,7 @@
 
         // Create cards
         function createBoard() {
+            gameContainer.innerHTML = '';
             const shuffledEmojis = shuffle(emojis);
             shuffledEmojis.forEach((emoji, index) => {
                 const card = document.createElement('div');
@@ -135,10 +181,12 @@
 
         // Flip card logic
         function flipCard(card) {
+            if (!timerInterval) startTimer();
             if (flippedCards.length < 2 && !card.classList.contains('flipped') && !card.classList.contains('matched')) {
                 card.classList.add('flipped');
                 card.textContent = card.dataset.value;
                 flippedCards.push(card);
+                playSound(440); // Flip sound
                 if (flippedCards.length === 2) {
                     checkMatch();
                 }
@@ -153,8 +201,10 @@
                 card2.classList.add('matched');
                 matches++;
                 scoreDisplay.textContent = `Matches: ${matches}`;
+                playSound(660, 'triangle', 0.2); // Match sound
                 flippedCards = [];
                 if (matches === emojis.length / 2) {
+                    clearInterval(timerInterval);
                     setTimeout(() => {
                         message.style.display = 'block';
                         startConfetti();
@@ -171,6 +221,27 @@
             }
         }
 
+        // Timer logic
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                seconds++;
+                timerDisplay.textContent = `Time: ${seconds}s`;
+            }, 1000);
+        }
+
+        // Reset game
+        function resetGame() {
+            flippedCards = [];
+            matches = 0;
+            seconds = 0;
+            scoreDisplay.textContent = `Matches: 0`;
+            timerDisplay.textContent = `Time: 0s`;
+            clearInterval(timerInterval);
+            timerInterval = null;
+            message.style.display = 'none';
+            createBoard();
+        }
+
         // Confetti effect
         function startConfetti() {
             for (let i = 0; i < 100; i++) {
@@ -182,8 +253,10 @@
                 document.body.appendChild(confetti);
                 setTimeout(() => confetti.remove(), 3000);
             }
+            playSound(880, 'triangle', 0.3); // Win sound
         }
 
+        restartButton.addEventListener('click', resetGame);
         createBoard();
     </script>
 </body>
