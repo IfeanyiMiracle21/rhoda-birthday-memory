@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Rhoda - Memory Match!</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #6b7280, #d1d5db);
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        #game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background: #4b5563;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+            transform: scale(1);
+            transition: transform 0.3s, background 0.3s;
+        }
+        .card.flipped, .card.matched {
+            background: #f3f4f6;
+            transform: scale(1.1);
+        }
+        .card.matched {
+            background: #34d399;
+        }
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 1px 1px 2px #333;
+        }
+        #message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #fff;
+            text-shadow: 2px 2px 4px #333;
+            display: none;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f59e0b;
+            opacity: 0.8;
+            animation: fall 3s linear;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+        footer {
+            position: fixed;
+            bottom: 20px;
+            color: #fff;
+            font-size: 1.2em;
+            text-shadow: 1px 1px 2px #333;
+        }
+        footer span {
+            color: #ef4444;
+            font-size: 1.4em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Happy 21st Birthday, Rhoda! 🎉</h1>
+    <div id="score">Matches: 0</div>
+    <div id="game-container"></div>
+    <div id="message">You Win, Rhoda! Happy Birthday!</div>
+    <footer>Made with <span>♥</span> by Ifeanyi</footer>
+    <script>
+        const emojis = ['🎂', '🎂', '🎁', '🎁', '🎈', '🎈', '🎉', '🎉', '🥳', '🥳', '🎀', '🎀', '🍾', '🍾', '🌟', '🌟'];
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
+        const message = document.getElementById('message');
+        let flippedCards = [];
+        let matches = 0;
+
+        // Shuffle emojis
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Create cards
+        function createBoard() {
+            const shuffledEmojis = shuffle(emojis);
+            shuffledEmojis.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.value = emoji;
+                card.addEventListener('click', () => flipCard(card));
+                gameContainer.appendChild(card);
+            });
+        }
+
+        // Flip card logic
+        function flipCard(card) {
+            if (flippedCards.length < 2 && !card.classList.contains('flipped') && !card.classList.contains('matched')) {
+                card.classList.add('flipped');
+                card.textContent = card.dataset.value;
+                flippedCards.push(card);
+                if (flippedCards.length === 2) {
+                    checkMatch();
+                }
+            }
+        }
+
+        // Check for match
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.value === card2.dataset.value) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matches++;
+                scoreDisplay.textContent = `Matches: ${matches}`;
+                flippedCards = [];
+                if (matches === emojis.length / 2) {
+                    setTimeout(() => {
+                        message.style.display = 'block';
+                        startConfetti();
+                    }, 500);
+                }
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    card1.textContent = '';
+                    card2.textContent = '';
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        // Confetti effect
+        function startConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = ['#f59e0b', '#ef4444', '#3b82f6', '#10b981'][Math.floor(Math.random() * 4)];
+                confetti.style.animationDuration = Math.random() * 2 + 2 + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
